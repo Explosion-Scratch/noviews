@@ -1,17 +1,88 @@
 <script>
   import NoViews from "./NoViews.svelte";
+  import Settings from "./Settings.svelte";
   import { onMount } from "svelte";
-
+  let showSettings = false;
+  let settings = {};
   let info = {
     token: {},
+    loaded: false,
     signedIn: false,
   };
-  onMount(start);
+  let queryParams = {};
+
+  $: {
+    for (let [key, value] of Object.entries(settings)) {
+      if (settings[key]) {
+        queryParams[key] = value;
+      } else {
+        delete queryParams[key];
+      }
+    }
+    if (settings.publishedAfter) {
+      queryParams.publishedAfter = formatDate(
+        new Date(settings.publishedAfter)
+      );
+    }
+    if (settings.publishedBefore) {
+      queryParams.publishedBefore = formatDate(
+        new Date(settings.publishedBefore)
+      );
+    }
+    delete queryParams.maxViews;
+    delete queryParams.searchPattern;
+  }
+
+  onMount(() => {
+    try {
+      settings = JSON.parse(localStorage.settings);
+      if (typeof settings !== "object") {
+        settings = {};
+      }
+    } catch (e) {}
+    info.token = JSON.parse(localStorage?.token || "{}");
+    if (
+      typeof info.token !== "object" ||
+      !(
+        info.token.access_token &&
+        info.token.expires_at &&
+        info.token.token_type
+      ) ||
+      info.token.expires_at < Date.now()
+    ) {
+      console.log(info.token, "invalid");
+      info.token = {};
+      info.signedIn = false;
+    } else {
+      console.log("Signed in");
+      info.signedIn = true;
+    }
+
+    Object.assign(window, { info, settings });
+    settings = {
+      publishedAfter: new Date("January 1, 2000"),
+      publishedBefore: new Date(),
+      language: "en",
+      videoDuration: "any",
+      safeSearch: "moderate",
+      maxViews: 1,
+      ...settings,
+    };
+    start();
+    setInterval(() => {
+      localStorage.setItem("settings", JSON.stringify(settings));
+    }, 500);
+  });
+
   async function start() {
     await until(() => window.gapi);
     console.log(window.gapi);
     console.log("GAPI loaded");
-    gapi.load("client", initClient);
+    gapi.load("client", () => {
+      initClient().then(() => {
+        info.loaded = true;
+      });
+    });
   }
 
   function initClient() {
@@ -54,6 +125,28 @@
     let response = user.getAuthResponse();
     info.signedIn = true;
     info.token = response;
+    localStorage.setItem("token", JSON.stringify(info.token));
+  }
+
+  function formatDate(d) {
+    d = new Date(d.getTime() - Math.random() * 1000 * 60 * 60 * 24);
+    function pad(n) {
+      return n < 10 ? "0" + n : n;
+    }
+    return (
+      d.getUTCFullYear() +
+      "-" +
+      pad(d.getUTCMonth() + 1) +
+      "-" +
+      pad(d.getUTCDate()) +
+      "T" +
+      pad(d.getUTCHours()) +
+      ":" +
+      pad(d.getUTCMinutes()) +
+      ":" +
+      pad(d.getUTCSeconds()) +
+      "Z"
+    );
   }
 </script>
 
@@ -65,20 +158,33 @@
   {#if !info.signedIn}
     <h2>NoViews</h2>
     <span class="desc">Find a random YouTube video with 1 or less views</span>
-    <button on:click={signin}>Signin</button>
+    <button
+      disabled={!info.loaded}
+      class="button"
+      on:click={() => info.loaded && signin()}
+      >{#if !info.loaded}Loading libraries...{:else}Go!{/if}</button
+    >
   {:else}
     <NoViews
+      on:settings={() => (showSettings = true)}
       fetchOpts={{
         headers: {
           Authorization: `${info.token.token_type} ${info.token.access_token}`,
         },
       }}
+      maxViews={settings.maxViews || 1}
+      searchPattern={settings.searchPattern}
+      {queryParams}
     />
   {/if}
+  {#if showSettings}<Settings
+      bind:opts={settings}
+      on:close={() => (showSettings = false)}
+    />{/if}
 </div>
 
 <style>
-  :global(button) {
+  :global(.button) {
     width: 100%;
     border: 1px solid #0002;
     border-radius: 2px;
@@ -87,10 +193,10 @@
     cursor: pointer;
     color: #333;
   }
-  :global(button:hover) {
+  :global(.button:hover) {
     background: #00000009;
   }
-  :global(button:focus) {
+  :global(.button:focus) {
     outline: none;
     box-shadow: 0 0 0 2px #0001;
   }
@@ -107,6 +213,11 @@
   :global(.desc) {
     color: #888;
     font-style: italic;
+    margin-bottom: 20px;
+  }
+  .error {
+    font-style: italic;
+    color: #c66;
     margin-bottom: 20px;
   }
 </style>
