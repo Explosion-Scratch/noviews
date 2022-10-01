@@ -10,6 +10,7 @@
     "[random_prefix][random_whitespace][random_number]";
   let video;
   export let maxViews = 1;
+  export let showSignout = true;
   $: videoInfo = video?.snippet;
   let THRESHOLD = 1;
   import { onMount } from "svelte";
@@ -30,9 +31,7 @@
     const whitespaces = ["-", "_", " "];
 
     let pattern = searchPattern
-      .replace(/\[random[ _-]number\]/g, () =>
-        Math.round(Math.random() * 9999)
-      )
+      .replace(/\[random[ _-]number\]/g, () => Math.round(Math.random() * 9999))
       .replace(
         /\[random[ _-]prefix\]/g,
         () => prefixes[Math.floor(Math.random() * prefixes.length)]
@@ -50,7 +49,7 @@
     console.log(json);
     if (json.error) {
       console.error(json);
-      throw new Error("There was an error");
+      throw new Error(json.error.message);
     }
     let vids = await fetch(
       `https://www.googleapis.com/youtube/v3/videos?id=${json.items
@@ -76,7 +75,7 @@
     try {
       await findVid(5);
     } catch (e) {
-      error = true;
+      error = e.message || true;
       video = null;
       loading = false;
     }
@@ -132,7 +131,9 @@
   />
 {:else if !loading}
   <h2>That's just sad bro</h2>
-  {#if error}<span class="error">There was an error</span>{/if}
+  {#if error}<span class="error"
+      >{typeof error === "string" ? error : "There was an error"}</span
+    >{/if}
   <span class="desc">Find a random YouTube video with 1 or less views</span>
 {/if}
 {#if videoInfo}
@@ -157,7 +158,11 @@
         {video.statistics.viewCount}
       </div>
     </div>
-    <a class="channel" href="https://youtube.com/channel/{videoInfo.channelId}">
+    <a
+      class="channel"
+      href="https://youtube.com/channel/{videoInfo.channelId}"
+      data-tippy-content="Visit {videoInfo.channelTitle} on YouTube"
+    >
       <svg width="32" height="32" viewBox="0 0 32 32"
         ><path
           fill="currentColor"
@@ -170,7 +175,9 @@
       {videoInfo.channelTitle}
     </a>
     <div class="desc">
-      {fromNow(videoInfo.publishedAt, { zero: false, max: 1 })} ago
+      <span data-tippy-content={videoInfo.publishedAt}
+        >{fromNow(videoInfo.publishedAt, { zero: false, max: 1 })} ago</span
+      >
       {video.description?.trim()?.length
         ? " – " + niceslice(videoInfo.description)
         : ""}
@@ -185,6 +192,7 @@
       {#if video}Again!{:else}Go!{/if}
     </button>
     <svg
+      data-tippy-content="Settings"
       on:click={() => dispatch("settings")}
       width="32"
       height="32"
@@ -197,7 +205,38 @@
   </div>
 {/if}
 
+{#if showSignout}
+  <svg
+    on:click={() => (localStorage.clear(), location.reload())}
+    data-tippy-content="Signout"
+    class="signout"
+    width="32"
+    height="32"
+    viewBox="0 0 256 256"
+    ><path
+      fill="currentColor"
+      d="m221.7 133.7l-42 42a8.3 8.3 0 0 1-5.7 2.3a8 8 0 0 1-5.6-13.7l28.3-28.3H104a8 8 0 0 1 0-16h92.7l-28.3-28.3a8 8 0 0 1 11.3-11.4l42 42a8.1 8.1 0 0 1 0 11.4ZM104 208H48V48h56a8 8 0 0 0 0-16H48a16 16 0 0 0-16 16v160a16 16 0 0 0 16 16h56a8 8 0 0 0 0-16Z"
+    /></svg
+  >
+{/if}
+
 <style>
+  .signout {
+    position: fixed;
+    top: 5px;
+    right: 5px;
+    padding: 4px 7px;
+    border-radius: 3px;
+    display: grid;
+    place-items: center;
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+
+  .signout:hover {
+    background: #0001;
+  }
+
   iframe {
     aspect-ratio: 16/9;
     width: 100%;

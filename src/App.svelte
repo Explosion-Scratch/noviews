@@ -3,6 +3,7 @@
   import Settings from "./Settings.svelte";
   import { onMount } from "svelte";
   let showSettings = false;
+  let anonymous = false;
   let settings = {};
   let info = {
     token: {},
@@ -12,6 +13,9 @@
   let queryParams = {};
 
   $: {
+    if (anonymous) {
+      queryParams.key = `AIzaSyC_5nnMeplNjnAVC5tyS5OT5tDxnt43QFA`;
+    }
     for (let [key, value] of Object.entries(settings)) {
       if (settings[key]) {
         queryParams[key] = value;
@@ -34,6 +38,22 @@
   }
 
   onMount(() => {
+    import("https://cdn.skypack.dev/tippy.js").then(({ default: tippy }) => {
+      window.tippy = tippy;
+      setInterval(() => {
+        [
+          ...document.querySelectorAll(
+            "[data-tippy-content]:not([data-tippy-checked])"
+          ),
+        ].forEach((i) => {
+          tippy(i, {
+            theme: "light-border",
+            content: i.getAttribute("data-tippy-content"),
+          });
+          i.setAttribute("data-tippy-checked", "true");
+        });
+      }, 500);
+    });
     try {
       settings = JSON.parse(localStorage.settings);
       if (typeof settings !== "object") {
@@ -152,19 +172,37 @@
 
 <svelte:head>
   <script src="https://apis.google.com/js/api.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/tippy.js@6.3.7/themes/light-border.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css"
+  />
 </svelte:head>
 
 <div class="container">
-  {#if !info.signedIn}
+  {#if !info.signedIn && !anonymous}
     <h2>NoViews</h2>
     <span class="desc">Find a random YouTube video with 1 or less views</span>
     <button
+      data-tippy-content="Sign in with google"
       disabled={!info.loaded}
       class="button"
       on:click={() => info.loaded && signin()}
       >{#if !info.loaded}Loading libraries...{:else}Go!{/if}</button
     >
-  {:else}
+    {#if info.loaded}
+      <span
+        data-tippy-content="This may or may not work depending on how many people use it"
+        class="below"
+        on:click={() => (anonymous = true)}
+        >Use without signing in - May be rate limited</span
+      >
+    {/if}
+  {/if}
+  {#if info.signedIn || anonymous}
     <NoViews
       on:settings={() => (showSettings = true)}
       fetchOpts={{
@@ -172,6 +210,7 @@
           Authorization: `${info.token.token_type} ${info.token.access_token}`,
         },
       }}
+      showSignout={true}
       maxViews={settings.maxViews || 1}
       searchPattern={settings.searchPattern}
       {queryParams}
@@ -184,6 +223,17 @@
 </div>
 
 <style>
+  .below {
+    color: #999 !important;
+    text-decoration: underline;
+    cursor: pointer;
+    font-style: italic;
+    text-align: left;
+    margin-top: 10px;
+  }
+  :global(body) {
+    padding: 0 !important;
+  }
   :global(.button) {
     width: 100%;
     border: 1px solid #0002;
@@ -215,7 +265,7 @@
     font-style: italic;
     margin-bottom: 20px;
   }
-  .error {
+  :global(.error) {
     font-style: italic;
     color: #c66;
     margin-bottom: 20px;
