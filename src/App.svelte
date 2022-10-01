@@ -1,6 +1,8 @@
 <script>
+  import ToastContainer from "./ToastContainer.svelte";
   import NoViews from "./NoViews.svelte";
   import Settings from "./Settings.svelte";
+  import notifs from "./toast.js";
   import { onMount } from "svelte";
   let showSettings = false;
   let anonymous = false;
@@ -38,6 +40,8 @@
   }
 
   onMount(() => {
+    console.log("Test")
+    console.log(notifs)
     import("https://cdn.skypack.dev/tippy.js").then(({ default: tippy }) => {
       window.tippy = tippy;
       setInterval(() => {
@@ -101,6 +105,7 @@
     gapi.load("client", () => {
       initClient().then(() => {
         info.loaded = true;
+        notifs.show("Loaded!")
       });
     });
   }
@@ -218,9 +223,11 @@
   {/if}
   {#if showSettings}<Settings
       bind:opts={settings}
-      on:close={() => (showSettings = false)}
+      on:close={() => (showSettings = false,notifs.show("Saved settings"))}
     />{/if}
 </div>
+
+<ToastContainer></ToastContainer>
 
 <style>
   .below {

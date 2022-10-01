@@ -1,4 +1,5 @@
 <script>
+  import notifs from "./toast.js";
   import { createEventDispatcher } from "svelte";
   export let queryParams = {};
   let error = false;
@@ -19,6 +20,7 @@
 
   async function findVid(iterations = 5, curr = []) {
     if (iterations <= 0) {
+      notifs.show("Couldn't find a video with less than " + THRESHOLD + " views")
       console.log("Couldn't find");
       video = curr.sort(
         (a, b) => a.statistics.viewCount - b.statistics.viewCount
@@ -40,6 +42,8 @@
         /\[random[ _-]whitespace\]/g,
         () => whitespaces[Math.floor(Math.random() * whitespaces.length)]
       );
+
+    notifs.show(`Searching for "${pattern}"`)
     let json = await fetch(
       `https://www.googleapis.com/youtube/v3/search?q=${pattern}&part=snippet&${new URLSearchParams(
         queryParams
@@ -72,9 +76,11 @@
   async function clicked() {
     loading = true;
     error = false;
+    notifs.show("Searching...")
     try {
       await findVid(5);
     } catch (e) {
+      notifs.show("There was an error")
       error = e.message || true;
       video = null;
       loading = false;
@@ -130,7 +136,7 @@
     allowfullscreen
   />
 {:else if !loading}
-  <h2>That's just sad bro</h2>
+  <h2>NoViews</h2>
   {#if error}<span class="error"
       >{typeof error === "string" ? error : "There was an error"}</span
     >{/if}
