@@ -4,6 +4,7 @@
   import Settings from "./Settings.svelte";
   import notifs from "./toast.js";
   import { onMount } from "svelte";
+  import toast from "./toast.js";
   let showSettings = false;
   let anonymous = false;
   let settings = {};
@@ -11,6 +12,7 @@
     token: {},
     loaded: false,
     signedIn: false,
+    reload: false,
   };
   let queryParams = {};
 
@@ -40,8 +42,7 @@
   }
 
   onMount(() => {
-    console.log("Test")
-    console.log(notifs)
+    notifs.show("Loading...");
     import("https://cdn.skypack.dev/tippy.js").then(({ default: tippy }) => {
       window.tippy = tippy;
       setInterval(() => {
@@ -102,14 +103,18 @@
     await until(() => window.gapi);
     console.log(window.gapi);
     console.log("GAPI loaded");
-    gapi.load("client", () => {
-      initClient().then(() => {
-        info.loaded = true;
-        notifs.show("Loaded!")
-      });
+    gapi.load("client", {
+      callback: () => {
+        initClient().then(() => {
+          info.loaded = true;
+          notifs.show("Loaded!");
+        });
+      },
+      onerror: () => {
+        notifs.show("There was an error");
+      },
     });
   }
-
   function initClient() {
     return new Promise((resolve) => {
       gapi.client
@@ -123,7 +128,19 @@
             "624071780217-cp736o7egfe97s941dc2kvmv5o7oavbs.apps.googleusercontent.com",
           scope: "https://www.googleapis.com/auth/youtube.readonly",
         })
-        .then(() => resolve());
+        .then(
+          () => resolve(),
+          (e) => {
+            info.reload = true;
+            console.log(e);
+            notifs.show(
+              `Error loading client${
+                e.details ? ": " + e.details.split(":")[0] : ""
+              }`,
+              { timeout: 5000 }
+            );
+          }
+        );
     });
   }
 
@@ -193,10 +210,12 @@
     <span class="desc">Find a random YouTube video with 1 or less views</span>
     <button
       data-tippy-content="Sign in with google"
-      disabled={!info.loaded}
+      disabled={!info.loaded && !info.reload}
       class="button"
-      on:click={() => info.loaded && signin()}
-      >{#if !info.loaded}Loading libraries...{:else}Go!{/if}</button
+      on:click={() =>
+        info.reload ? location.reload() : info.loaded && signin()}
+      >{#if !info.loaded && !info.reload}Loading libraries...{:else if info.reload}There
+        was an error - Reload{:else}Go!{/if}</button
     >
     {#if info.loaded}
       <span
@@ -223,11 +242,11 @@
   {/if}
   {#if showSettings}<Settings
       bind:opts={settings}
-      on:close={() => (showSettings = false,notifs.show("Saved settings"))}
+      on:close={() => ((showSettings = false), notifs.show("Saved settings"))}
     />{/if}
 </div>
 
-<ToastContainer></ToastContainer>
+<ToastContainer />
 
 <style>
   .below {

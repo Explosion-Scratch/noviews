@@ -1049,7 +1049,7 @@ var app = (function () {
 
     let notifications = writable([]);
 
-    var notifs = {
+    var toast = {
     	show(text, { timeout = 1000, dismissable = true } = {}) {
     		let id = Math.random().toString(36).slice(2);
     		notifications.update((i) => [
@@ -1525,7 +1525,7 @@ var app = (function () {
     const file$3 = "src/NoViews.svelte";
 
     // (138:19) 
-    function create_if_block_5(ctx) {
+    function create_if_block_5$1(ctx) {
     	let h2;
     	let t1;
     	let t2;
@@ -1578,7 +1578,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_5.name,
+    		id: create_if_block_5$1.name,
     		type: "if",
     		source: "(138:19) ",
     		ctx
@@ -2099,7 +2099,7 @@ var app = (function () {
 
     	function select_block_type(ctx, dirty) {
     		if (/*video*/ ctx[1]) return create_if_block_4$1;
-    		if (!/*loading*/ ctx[3]) return create_if_block_5;
+    		if (!/*loading*/ ctx[3]) return create_if_block_5$1;
     	}
 
     	let current_block_type = select_block_type(ctx);
@@ -2263,7 +2263,7 @@ var app = (function () {
 
     	async function findVid(iterations = 5, curr = []) {
     		if (iterations <= 0) {
-    			notifs.show("Couldn't find a video with less than " + THRESHOLD + " views");
+    			toast.show("Couldn't find a video with less than " + THRESHOLD + " views");
     			console.log("Couldn't find");
     			$$invalidate(1, video = curr.sort((a, b) => a.statistics.viewCount - b.statistics.viewCount)[0]);
     			console.log(video);
@@ -2273,7 +2273,7 @@ var app = (function () {
     		const prefixes = `IMG,IMG_,IMG-,DSC`.split(",");
     		const whitespaces = ["-", "_", " "];
     		let pattern = searchPattern.replace(/\[random[ _-]number\]/g, () => Math.round(Math.random() * 9999)).replace(/\[random[ _-]prefix\]/g, () => prefixes[Math.floor(Math.random() * prefixes.length)]).replace(/\[random[ _-]whitespace\]/g, () => whitespaces[Math.floor(Math.random() * whitespaces.length)]);
-    		notifs.show(`Searching for "${pattern}"`);
+    		toast.show(`Searching for "${pattern}"`);
     		let json = await fetch(`https://www.googleapis.com/youtube/v3/search?q=${pattern}&part=snippet&${new URLSearchParams(queryParams).toString()}&type=video&videoEmbeddable=true`, fetchOpts).then(r => r.json());
     		console.log(json);
 
@@ -2296,12 +2296,12 @@ var app = (function () {
     	async function clicked() {
     		$$invalidate(3, loading = true);
     		$$invalidate(2, error = false);
-    		notifs.show("Searching...");
+    		toast.show("Searching...");
 
     		try {
     			await findVid(5);
     		} catch(e) {
-    			notifs.show("There was an error");
+    			toast.show("There was an error");
     			$$invalidate(2, error = e.message || true);
     			$$invalidate(1, video = null);
     			$$invalidate(3, loading = false);
@@ -2328,7 +2328,7 @@ var app = (function () {
     	};
 
     	$$self.$capture_state = () => ({
-    		notifs,
+    		notifs: toast,
     		createEventDispatcher,
     		queryParams,
     		error,
@@ -3389,7 +3389,7 @@ var app = (function () {
     const { Object: Object_1, console: console_1, document: document_1 } = globals;
     const file = "src/App.svelte";
 
-    // (191:2) {#if !info.signedIn && !anonymous}
+    // (208:2) {#if !info.signedIn && !anonymous}
     function create_if_block_2(ctx) {
     	let h2;
     	let t1;
@@ -3403,7 +3403,8 @@ var app = (function () {
     	let dispose;
 
     	function select_block_type(ctx, dirty) {
-    		if (!/*info*/ ctx[4].loaded) return create_if_block_4;
+    		if (!/*info*/ ctx[4].loaded && !/*info*/ ctx[4].reload) return create_if_block_4;
+    		if (/*info*/ ctx[4].reload) return create_if_block_5;
     		return create_else_block;
     	}
 
@@ -3424,13 +3425,13 @@ var app = (function () {
     			t4 = space();
     			if (if_block1) if_block1.c();
     			if_block1_anchor = empty();
-    			add_location(h2, file, 191, 4, 4907);
+    			add_location(h2, file, 208, 4, 5357);
     			attr_dev(span, "class", "desc");
-    			add_location(span, file, 192, 4, 4928);
+    			add_location(span, file, 209, 4, 5378);
     			attr_dev(button, "data-tippy-content", "Sign in with google");
-    			button.disabled = button_disabled_value = !/*info*/ ctx[4].loaded;
+    			button.disabled = button_disabled_value = !/*info*/ ctx[4].loaded && !/*info*/ ctx[4].reload;
     			attr_dev(button, "class", "button");
-    			add_location(button, file, 193, 4, 5007);
+    			add_location(button, file, 210, 4, 5457);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, h2, anchor);
@@ -3459,7 +3460,7 @@ var app = (function () {
     				}
     			}
 
-    			if (dirty & /*info*/ 16 && button_disabled_value !== (button_disabled_value = !/*info*/ ctx[4].loaded)) {
+    			if (dirty & /*info*/ 16 && button_disabled_value !== (button_disabled_value = !/*info*/ ctx[4].loaded && !/*info*/ ctx[4].reload)) {
     				prop_dev(button, "disabled", button_disabled_value);
     			}
 
@@ -3495,14 +3496,14 @@ var app = (function () {
     		block,
     		id: create_if_block_2.name,
     		type: "if",
-    		source: "(191:2) {#if !info.signedIn && !anonymous}",
+    		source: "(208:2) {#if !info.signedIn && !anonymous}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (199:45) {:else}
+    // (218:29) {:else}
     function create_else_block(ctx) {
     	let t;
 
@@ -3522,14 +3523,41 @@ var app = (function () {
     		block,
     		id: create_else_block.name,
     		type: "else",
-    		source: "(199:45) {:else}",
+    		source: "(218:29) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (199:7) {#if !info.loaded}
+    // (217:83) 
+    function create_if_block_5(ctx) {
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text("There\n        was an error - Reload");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_5.name,
+    		type: "if",
+    		source: "(217:83) ",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (217:7) {#if !info.loaded && !info.reload}
     function create_if_block_4(ctx) {
     	let t;
 
@@ -3549,14 +3577,14 @@ var app = (function () {
     		block,
     		id: create_if_block_4.name,
     		type: "if",
-    		source: "(199:7) {#if !info.loaded}",
+    		source: "(217:7) {#if !info.loaded && !info.reload}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (201:4) {#if info.loaded}
+    // (220:4) {#if info.loaded}
     function create_if_block_3(ctx) {
     	let span;
     	let mounted;
@@ -3568,7 +3596,7 @@ var app = (function () {
     			span.textContent = "Use without signing in - May be rate limited";
     			attr_dev(span, "data-tippy-content", "This may or may not work depending on how many people use it");
     			attr_dev(span, "class", "below svelte-1bljdl1");
-    			add_location(span, file, 201, 6, 5263);
+    			add_location(span, file, 220, 6, 5844);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -3590,14 +3618,14 @@ var app = (function () {
     		block,
     		id: create_if_block_3.name,
     		type: "if",
-    		source: "(201:4) {#if info.loaded}",
+    		source: "(220:4) {#if info.loaded}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (210:2) {#if info.signedIn || anonymous}
+    // (229:2) {#if info.signedIn || anonymous}
     function create_if_block_1(ctx) {
     	let noviews;
     	let current;
@@ -3659,14 +3687,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(210:2) {#if info.signedIn || anonymous}",
+    		source: "(229:2) {#if info.signedIn || anonymous}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (224:2) {#if showSettings}
+    // (243:2) {#if showSettings}
     function create_if_block(ctx) {
     	let settings_1;
     	let updating_opts;
@@ -3723,7 +3751,7 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(224:2) {#if showSettings}",
+    		source: "(243:2) {#if showSettings}",
     		ctx
     	});
 
@@ -3762,15 +3790,15 @@ var app = (function () {
     			t3 = space();
     			create_component(toastcontainer.$$.fragment);
     			if (!src_url_equal(script.src, script_src_value = "https://apis.google.com/js/api.js")) attr_dev(script, "src", script_src_value);
-    			add_location(script, file, 178, 2, 4573);
+    			add_location(script, file, 195, 2, 5023);
     			attr_dev(link0, "rel", "stylesheet");
     			attr_dev(link0, "href", "https://unpkg.com/tippy.js@6.3.7/themes/light-border.css");
-    			add_location(link0, file, 179, 2, 4633);
+    			add_location(link0, file, 196, 2, 5083);
     			attr_dev(link1, "rel", "stylesheet");
     			attr_dev(link1, "href", "https://unpkg.com/tippy.js@6.3.7/dist/tippy.css");
-    			add_location(link1, file, 183, 2, 4735);
+    			add_location(link1, file, 200, 2, 5185);
     			attr_dev(div, "class", "container");
-    			add_location(div, file, 189, 0, 4842);
+    			add_location(div, file, 206, 0, 5292);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -3888,18 +3916,6 @@ var app = (function () {
     	return block;
     }
 
-    function initClient() {
-    	return new Promise(resolve => {
-    			gapi.client.init({
-    				// Your API key will be automatically added to the Discovery Document URLs.
-    				discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"],
-    				// clientId and scope are optional if auth is not required.
-    				clientId: "624071780217-cp736o7egfe97s941dc2kvmv5o7oavbs.apps.googleusercontent.com",
-    				scope: "https://www.googleapis.com/auth/youtube.readonly"
-    			}).then(() => resolve());
-    		});
-    }
-
     async function until(fn, args = []) {
     	return new Promise(resolve => {
     			async function repeat() {
@@ -3942,14 +3958,14 @@ var app = (function () {
     	let info = {
     		token: {},
     		loaded: false,
-    		signedIn: false
+    		signedIn: false,
+    		reload: false
     	};
 
     	let queryParams = {};
 
     	onMount(() => {
-    		console.log("Test");
-    		console.log(notifs);
+    		toast.show("Loading...");
 
     		import('https://cdn.skypack.dev/tippy.js').then(({ default: tippy }) => {
     			window.tippy = tippy;
@@ -4019,12 +4035,33 @@ var app = (function () {
     		console.log(window.gapi);
     		console.log("GAPI loaded");
 
-    		gapi.load("client", () => {
-    			initClient().then(() => {
-    				$$invalidate(4, info.loaded = true, info);
-    				notifs.show("Loaded!");
-    			});
+    		gapi.load("client", {
+    			callback: () => {
+    				initClient().then(() => {
+    					$$invalidate(4, info.loaded = true, info);
+    					toast.show("Loaded!");
+    				});
+    			},
+    			onerror: () => {
+    				toast.show("There was an error");
+    			}
     		});
+    	}
+
+    	function initClient() {
+    		return new Promise(resolve => {
+    				gapi.client.init({
+    					// Your API key will be automatically added to the Discovery Document URLs.
+    					discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"],
+    					// clientId and scope are optional if auth is not required.
+    					clientId: "624071780217-cp736o7egfe97s941dc2kvmv5o7oavbs.apps.googleusercontent.com",
+    					scope: "https://www.googleapis.com/auth/youtube.readonly"
+    				}).then(() => resolve(), e => {
+    					$$invalidate(4, info.reload = true, info);
+    					console.log(e);
+    					toast.show(`Error loading client${e.details ? ": " + e.details.split(":")[0] : ""}`, { timeout: 5000 });
+    				});
+    			});
     	}
 
     	async function signin() {
@@ -4042,7 +4079,10 @@ var app = (function () {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1.warn(`<App> was created with unknown prop '${key}'`);
     	});
 
-    	const click_handler = () => info.loaded && signin();
+    	const click_handler = () => info.reload
+    	? location.reload()
+    	: info.loaded && signin();
+
     	const click_handler_1 = () => $$invalidate(0, anonymous = true);
     	const settings_handler = () => $$invalidate(3, showSettings = true);
 
@@ -4051,14 +4091,15 @@ var app = (function () {
     		$$invalidate(1, settings);
     	}
 
-    	const close_handler = () => ($$invalidate(3, showSettings = false), notifs.show("Saved settings"));
+    	const close_handler = () => ($$invalidate(3, showSettings = false), toast.show("Saved settings"));
 
     	$$self.$capture_state = () => ({
     		ToastContainer,
     		NoViews,
     		Settings,
-    		notifs,
+    		notifs: toast,
     		onMount,
+    		toast,
     		showSettings,
     		anonymous,
     		settings,
